@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>AI Product Recommender | Smart Shopping</title>
+  <!-- FontAwesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel='stylesheet' href='{{ url_for("static", filename="style.css") }}'>
+</head>
+
+<body class="bg-dark text-white overflow-x-hidden">
+
+  <!-- Particle Background -->
+  <div class="particle-container">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="dot-pattern"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <i class="fas fa-shopping-bag text-purple"></i> AI Product <span class="text-blue">Recommender</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+      <a href="/dashboard" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="/history" class="nav-link"><i class="fas fa-history"></i> History</a>
+      <a href="/saved" class="nav-link"><i class="far fa-heart"></i> Saved</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/search" class="gradient-btn ripple-btn"><i class="fas fa-search"></i> New Search</a>
+      <div class="icon-circle"><i class="far fa-moon text-muted"></i></div>
+      <div class="avatar-circle">
+        <img src="https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff" alt="User Avatar">
+      </div>
+    </div>
+  </nav>
+
+  <div class='container main-container'>
+
+    <div class='container' style="padding:0 2rem;">
+
+      <!-- Hero Section -->
+      <header class="hero-section">
+        <div class="hero-content">
+          <h1 class="hero-title">AI Product<br>Recommender <i class="fas fa-sparkles text-pink"
+              style="font-size:1.5rem;"></i></h1>
+          <p class="hero-subtitle">Discover the ultimate shopping experience. We instantly compare thousands of products
+            across Amazon, Flipkart, Myntra, Croma, & 11+ major platforms using advanced AI analysis.</p>
+
+          <form action='/search' method='POST' class='search-container' id='searchForm' role="search">
+            <i class="fas fa-search search-icon" aria-hidden="true"></i>
+            <input type='text' name='query' class="search-input" placeholder='What are you looking for?' required
+              autocomplete="off" aria-label="Search for products">
+            <div id="suggestions" class="suggestions-dropdown"></div>
+            <button type='submit' id='searchBtn' class="gradient-btn ripple-btn search-btn"
+              aria-label="Analyze products">
+              <span id="btnText">Analyze</span>
+              <i class="fas fa-arrow-right" id="btnIcon" style="margin-left: 8px;"></i>
+              <i class="fas fa-spinner fa-spin" id="btnSpinner" style="display: none; margin-left: 8px;"></i>
+            </button>
+            <div class="search-options" style="display:flex; gap:1rem; margin-top:1.5rem; justify-content:center;">
+              <select name="category" class="category-select">
+                <option value="All">All Categories</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Fashion">Fashion</option>
+                <option value="Home & Kitchen">Home & Kitchen</option>
+                <option value="Beauty">Beauty</option>
+                <option value="Books">Books</option>
+              </select>
+            </div>
+            <div class="search-hint">Press Enter to Search</div>
+          </form>
+        </div>
+
+        <!-- Right Side Graphic -->
+        <!-- Right Side Graphic (Premium 3D AI Card) -->
+        <div class="hero-graphic">
+          <div class="graphic-container">
+            <!-- Neon Glow -->
+            <div class="robot-glow"></div>
+            
+            <!-- 3D Mascot -->
+            <img src="{{ url_for('static', filename='robot_v3.png') }}" 
+                 alt="AI Mascot" class="robot-mascot">
+
+            <!-- Main Card -->
+            <div class="graphic-card glass-card">
+              <div class="best-deal-badge">
+                <i class="fas fa-star"></i>
+                Best Deal Found
+                <span>Verified by AI Analysis</span>
+              </div>
+
+              <!-- AI Progress Bar -->
+              <div class="ai-progress-box">
+                <div class="progress-header">
+                  <span>AI analyzing 50+ platforms...</span>
+                  <span class="pct-text">100%</span>
+                </div>
+                <div class="progress-bar-wrap">
+                  <div class="progress-bar-fill"></div>
+                </div>
+              </div>
+
+              <!-- Platform Rows -->
+              <div class="platform-rows">
+                <!-- Amazon Row -->
+                <div class="p-row">
+                  <div class="p-left">
+                    <div class="p-logo-box">
+                      <img src="{{ url_for('static', filename='amazon_logo.png') }}" alt="Amazon">
+                    </div>
+                    <div class="p-info">
+                      <span class="p-name">Amazon.in</span>
+                      <span class="p-status"><i class="fas fa-shield-alt"></i> Trusted</span>
+                    </div>
+                  </div>
+                  <div class="p-right">
+                    <span class="p-price">₹299</span>
+                    <span class="p-tag">Good Deal</span>
+                  </div>
+                </div>
+
+                <!-- Flipkart Row (Best Price) -->
+                <div class="p-row best-price">
+                  <div class="p-left">
+                    <div class="p-logo-box">
+                      <img src="{{ url_for('static', filename='flipkart_logo.png') }}" alt="Flipkart">
+                    </div>
+                    <div class="p-info">
+                      <span class="p-name">Flipkart</span>
+                      <span class="p-status highlight"><i class="fas fa-crown"></i> Best Price</span>
+                    </div>
+                  </div>
+                  <div class="p-right">
+                    <span class="p-price highlight">₹249</span>
+                    <span class="p-save">You Save ₹50</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Verification Tags -->
+              <div class="v-tags">
+                <span><i class="fas fa-check-circle"></i> Safe</span>
+                <span><i class="fas fa-check-circle"></i> Secure</span>
+                <span><i class="fas fa-check-circle"></i> AI Verified</span>
+              </div>
+            </div>
+
+            <!-- Floating Decorative Elements -->
+            <div class="floating-element fe-1"><i class="fas fa-percentage"></i></div>
+            <div class="floating-element fe-2"><i class="fas fa-star"></i></div>
+            <div class="floating-element fe-3"><i class="fas fa-shopping-bag"></i></div>
+          </div>
+        </div>
+      </header>
+    </div>
+
+    <style>
+      @keyframes float {
+        0% {
+          transform: translateY(0px);
+        }
+
+        50% {
+          transform: translateY(-15px);
+        }
+
+        100% {
+          transform: translateY(0px);
+        }
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+
+    <!-- Platform Logos -->
+    <div class="platform-logos-row">
+      <span class="platforms-label">Supported Platforms:</span>
+      <i class="fab fa-amazon text-orange" title="Amazon"></i>
+      <strong class="platform-letter text-gold serif" title="Flipkart">f</strong>
+      <strong class="platform-letter text-pink serif" title="Myntra">M</strong>
+      <strong class="platform-letter text-red serif" title="Snapdeal">S</strong>
+      <strong class="platform-letter text-magenta serif" title="Meesho">m</strong>
+      <strong class="platform-letter text-green serif" title="Croma">C</strong>
+      <strong class="platform-letter text-purple serif" title="Tata CLiQ">TC</strong>
+      <strong class="platform-letter text-orange serif" title="Bewakoof">B</strong>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+      <div class="loader-content">
+        <div class="cube-loader">
+          <div class="cube-face cube-front"></div>
+          <div class="cube-face cube-back"></div>
+          <div class="cube-face cube-right"></div>
+          <div class="cube-face cube-left"></div>
+          <div class="cube-face cube-top"></div>
+          <div class="cube-face cube-bottom"></div>
+        </div>
+        <h2 class="loading-text">AI is analyzing products...</h2>
+        <p class="loading-subtext">Scraping multiple platforms & calculating scores</p>
+      </div>
+    </div>
+
+    {% if error %}
+    <div class='error' style="margin-top:2rem;"><i class="fas fa-exclamation-circle"></i> {{ error }}</div>
+    {% endif %}
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-icon-circle bg-blue-dim text-blue"><i class="fas fa-cube"></i></div>
+      <div>
+        <div class="stat-value"><span class="stat-counter"
+            data-target="{{ stats.total_products if stats else 0 }}">{{ stats.total_products if stats else 0 }}</span></div>
+        <div class="stat-label">Products Compared</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-icon-circle bg-purple-dim text-purple"><i class="fas fa-chart-line"></i></div>
+      <div>
+        <div class="stat-value"><span class="stat-counter" data-target="{{ stats.total_searches if stats else 0 }}">{{
+            stats.total_searches if stats else 0 }}</span></div>
+        <div class="stat-label">Total Searches</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-icon-circle bg-pink-dim text-pink"><i class="fas fa-star"></i></div>
+      <div>
+        <div class="stat-value"><span style="font-size: 1.5rem;">{{ stats.best_platform if stats else 'N/A' }}</span></div>
+        <div class="stat-label">Best Platform</div>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-icon-circle bg-green-dim text-green"><i class="fas fa-bookmark"></i></div>
+      <div>
+        <div class="stat-value"><span class="stat-counter" id="savedItemsCount" data-target="0">0</span></div>
+        <div class="stat-label">Saved Items</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature Cards -->
+  <div class='features-grid'>
+    <!-- Card 1 -->
+    <div class='feature-card glass-card'>
+      <div class="feature-header">
+        <div class="feature-icon-box bg-blue-gradient"><i class="fas fa-tags"></i></div>
+        <h3 class="feature-title">Cross-Platform Comparison</h3>
+      </div>
+      <p class="feature-desc">Compare prices across 11 major platforms instantly to find the best deal.</p>
+      <div class="feature-visual-blue">
+        <div class="logo-stack">
+          <div class="logo-item"><i class="fab fa-amazon text-orange"></i></div>
+          <div class="logo-item bg-gold"><strong class="serif">f</strong></div>
+          <div class="logo-item"><strong class="serif text-pink">M</strong></div>
+        </div>
+        <div class="arrow-circle"><i class="fas fa-arrow-right"></i></div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class='feature-card glass-card'>
+      <div class="feature-header">
+        <div class="feature-icon-box bg-purple-gradient"><i class="fas fa-brain"></i></div>
+        <h3 class="feature-title">Review Analysis</h3>
+      </div>
+      <p class="feature-desc">Our NLP engine reads thousands of reviews to gauge true customer sentiment.</p>
+      <div class="feature-visual-dark">
+        <div class="stars-row">
+          <div class="stars"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+              class="fas fa-star"></i><i class="fas fa-star-half-alt"></i></div>
+          <div class="rating-num">4.5/5</div>
+        </div>
+        <div class="sentiment-bars">
+          <div class="sentiment-pill bg-green-dim text-green">Positive 89%</div>
+          <div class="sentiment-pill bg-gray-dim text-muted">Neutral 7%</div>
+          <div class="sentiment-pill bg-red-dim text-red">Negative 4%</div>
+        </div>
+        <div class="arrow-circle"><i class="fas fa-arrow-right"></i></div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class='feature-card glass-card'>
+      <div class="feature-header">
+        <div class="feature-icon-box bg-pink-gradient"><i class="fas fa-trophy"></i></div>
+        <h3 class="feature-title">Smart Ranking</h3>
+      </div>
+      <p class="feature-desc">Products are scored based on price, rating, and sentiment to give you the absolute best
+        choice.</p>
+      <div class="podium-container">
+        <div class="podium-step step-2">2</div>
+        <div class="podium-step step-1">
+          1
+          <i class="fas fa-crown podium-crown"></i>
+        </div>
+        <div class="podium-step step-3">3</div>
+      </div>
+      <div class="arrow-circle"><i class="fas fa-arrow-right"></i></div>
+    </div>
+  </div>
+
+  <!-- Popular Searches -->
+  <div class="popular-searches">
+    <h3 class="popular-title"><i class="fas fa-fire text-orange"></i> Popular Searches</h3>
+    <div class="search-chips">
+      <a href="#" class="search-chip blue-chip" onclick="quickSearch('Smartphones')"><i class="fas fa-mobile-alt"></i>
+        Smartphones</a>
+      <a href="#" class="search-chip purple-chip" onclick="quickSearch('Laptops')"><i class="fas fa-laptop"></i>
+        Laptops</a>
+      <a href="#" class="search-chip pink-chip" onclick="quickSearch('Headphones')"><i class="fas fa-headphones"></i>
+        Headphones</a>
+      <a href="#" class="search-chip green-chip" onclick="quickSearch('Watches')"><i class="far fa-clock"></i>
+        Watches</a>
+      <a href="#" class="search-chip gold-chip" onclick="quickSearch('Shoes')"><i class="fas fa-shoe-prints"></i>
+        Shoes</a>
+      <a href="#" class="search-chip gray-chip">View All <i class="fas fa-arrow-right"></i></a>
+    </div>
+  </div>
+  <!-- CTA Section -->
+  <section class="cta-section glass-card">
+    <h2 class="cta-title">Ready to find the best deals?</h2>
+    <p class="cta-subtitle">Stop overpaying. Start comparing instantly with our AI-powered engine across 11 platforms.
+    </p>
+    <button class="gradient-btn ripple-btn cta-btn" onclick="scrollToSearch()">
+      Start Comparing Now
+    </button>
+  </section>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="main-footer">
+    <div class="footer-links">
+      <a href="#" class="footer-link"><i class="fab fa-github"></i> GitHub</a>
+      <a href="#" class="footer-link"><i class="fas fa-file-alt"></i> Documentation</a>
+      <a href="#" class="footer-link"><i class="fas fa-info-circle"></i> About</a>
+    </div>
+    <p class="copyright">&copy; 2026 AI Product Recommender. Built for Final Year Project.</p>
+  </footer>
+
+  <script>
+    const form = document.getElementById('searchForm');
+    const btnText = document.getElementById('btnText');
+    const btnIcon = document.getElementById('btnIcon');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const searchInput = document.querySelector('.search-input');
+    const suggestionsBox = document.getElementById('suggestions');
+
+    // Ripple Effect
+    document.querySelectorAll('.ripple-btn').forEach(button => {
+      button.addEventListener('click', function (e) {
+        let x = e.clientX - e.target.getBoundingClientRect().left;
+        let y = e.clientY - e.target.getBoundingClientRect().top;
+        let ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        ripple.style.left = x + 'px';
+        ripple.style.top = y + 'px';
+        this.appendChild(ripple);
+        setTimeout(() => { ripple.remove(); }, 600);
+      });
+    });
+
+    // Update saved items count from localStorage on load
+    document.addEventListener("DOMContentLoaded", function() {
+        let savedItems = JSON.parse(localStorage.getItem('savedProducts')) || {};
+        let count = Object.keys(savedItems).length;
+        let savedCountEl = document.getElementById('savedItemsCount');
+        if (savedCountEl) {
+            savedCountEl.textContent = count;
+            savedCountEl.setAttribute('data-target', count);
+        }
+    });
+
+    function scrollToSearch() {
+      searchInput.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function quickSearch(val) {
+      searchInput.value = val;
+      form.submit();
+    }
+
+    form.addEventListener('submit', () => {
+      btnText.innerText = 'Analyzing...';
+      btnIcon.style.display = 'none';
+      btnSpinner.style.display = 'inline-block';
+      loadingOverlay.style.display = 'flex';
+    });
+
+    // Search Suggestions
+    const mockSuggestions = ["iPhone 15 Pro", "MacBook Air M2", "Sony XM5 Headphones", "Nike Running Shoes", "Samsung S23 Ultra"];
+
+    searchInput.addEventListener('input', (e) => {
+      const val = e.target.value.toLowerCase();
+      if (val.length > 2) {
+        const filtered = mockSuggestions.filter(s => s.toLowerCase().includes(val));
+        if (filtered.length > 0) {
+          suggestionsBox.innerHTML = filtered.map(s => `<div class="suggestion-item"><i class="fas fa-search"></i> ${s}</div>`).join('');
+          suggestionsBox.style.display = 'block';
+
+          document.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+              searchInput.value = item.innerText.trim();
+              suggestionsBox.style.display = 'none';
+              form.submit();
+            });
+          });
+        } else {
+          suggestionsBox.style.display = 'none';
+        }
+      } else {
+        suggestionsBox.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!form.contains(e.target)) suggestionsBox.style.display = 'none';
+    });
+
+    // Typing effect for placeholder
+    const placeholders = [
+      "What are you looking for?",
+      "Search 'iPhone 15 Pro'",
+      "Search 'Sony Noise Cancelling'",
+      "Find the best price for 'MacBook Air'"
+    ];
+    let pIdx = 0, charIdx = 0, isDeleting = false;
+
+    function typeEffect() {
+      const currentText = placeholders[pIdx];
+      searchInput.setAttribute('placeholder', isDeleting ? currentText.substring(0, charIdx - 1) : currentText.substring(0, charIdx + 1));
+      charIdx = isDeleting ? charIdx - 1 : charIdx + 1;
+
+      let speed = isDeleting ? 30 : 50;
+      if (!isDeleting && charIdx === currentText.length) { speed = 2000; isDeleting = true; }
+      else if (isDeleting && charIdx === 0) { isDeleting = false; pIdx = (pIdx + 1) % placeholders.length; speed = 500; }
+      setTimeout(typeEffect, speed);
+    }
+    setTimeout(typeEffect, 1000);
+
+    // Number count-up animation
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.stat-counter').forEach(counter => {
+        const target = +counter.getAttribute('data-target');
+        const updateCount = () => {
+          const c = +counter.innerText;
+          if (c < target) {
+            counter.innerText = Math.ceil(c + target / 50);
+            setTimeout(updateCount, 30);
+          } else { counter.innerText = target; }
+        };
+        updateCount();
+      });
+    });
+  </script>
+</body>
+
+</html>

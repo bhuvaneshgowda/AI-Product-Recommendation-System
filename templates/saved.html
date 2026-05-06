@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Products | AI Product Recommender</title>
+  <meta name="description" content="Your saved products from AI-powered comparisons.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #0f1729; color: #fff; min-height: 100vh; }
+    .page-wrapper { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    .page-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .page-subtitle { opacity: 0.6; font-size: 1rem; margin-bottom: 2.5rem; }
+
+    .saved-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .saved-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px;
+      overflow: hidden;
+      transition: transform 0.25s, box-shadow 0.25s;
+      display: flex;
+      flex-direction: column;
+    }
+    .saved-card:hover { transform: translateY(-5px); box-shadow: 0 12px 35px rgba(0,0,0,0.4); }
+    .saved-img-wrap {
+      background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      height: 180px; padding: 1rem;
+    }
+    .saved-img-wrap img { max-height: 100%; max-width: 100%; object-fit: contain; border-radius: 6px; }
+    .saved-img-wrap .no-img { font-size: 3rem; opacity: 0.2; }
+    .saved-body { padding: 1.2rem 1.4rem; display: flex; flex-direction: column; flex: 1; }
+    .saved-name {
+      font-weight: 600; font-size: 0.95rem; color: #fff;
+      display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 0.6rem;
+    }
+    .saved-platform { font-size: 0.8rem; opacity: 0.6; margin-bottom: 0.4rem; }
+    .saved-price { font-size: 1.3rem; font-weight: 700; color: #34d399; margin-bottom: 1rem; }
+    .saved-score { font-size: 0.8rem; opacity: 0.6; margin-bottom: 1rem; }
+    .card-actions { display: flex; gap: 0.7rem; margin-top: auto; }
+    .view-btn {
+      flex: 1; padding: 0.6rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+      background: linear-gradient(135deg, #6C63FF, #FF6FD8); color: #fff;
+      text-decoration: none; text-align: center; transition: transform 0.2s;
+    }
+    .view-btn:hover { transform: translateY(-2px); }
+    .remove-btn {
+      padding: 0.6rem 0.9rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+      background: rgba(239,68,68,0.1); color: #f87171;
+      border: 1px solid rgba(239,68,68,0.2); cursor: pointer; transition: background 0.2s;
+    }
+    .remove-btn:hover { background: rgba(239,68,68,0.25); }
+    .empty-state { text-align: center; padding: 6rem 2rem; opacity: 0.5; }
+    .empty-state i { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
+    .empty-state p { font-size: 1.1rem; margin-bottom: 1.5rem; }
+    .start-btn {
+      padding: 0.75rem 2rem; border-radius: 12px; font-size: 0.95rem; font-weight: 600;
+      background: linear-gradient(135deg, #6C63FF, #FF6FD8); color: #fff;
+      text-decoration: none; display: inline-block; transition: transform 0.2s;
+    }
+    .start-btn:hover { transform: translateY(-2px); }
+    .count-badge {
+      display: inline-block; background: rgba(108,99,255,0.2); color: #a78bfa;
+      padding: 0.3rem 0.8rem; border-radius: 99px; font-size: 0.8rem; font-weight: 600;
+      margin-left: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <i class="fas fa-shopping-bag text-purple"></i> AI Product <span class="text-blue">Recommender</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+      <a href="/dashboard" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="/history" class="nav-link"><i class="fas fa-history"></i> History</a>
+      <a href="/saved" class="nav-link active"><i class="far fa-heart"></i> Saved</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/" class="gradient-btn ripple-btn"><i class="fas fa-search"></i> New Search</a>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <h1 class="page-title">
+      <i class="fas fa-heart" style="color:#ec4899; margin-right:0.5rem;"></i>Saved Products
+      <span class="count-badge" id="savedCount">0</span>
+    </h1>
+    <p class="page-subtitle">Products you've saved from comparison results for later.</p>
+
+    <!-- Rendered by JavaScript from localStorage -->
+    <div id="savedGrid" class="saved-grid"></div>
+    <div id="emptyState" class="empty-state" style="display:none;">
+      <i class="fas fa-heart-broken"></i>
+      <p>No saved products yet.</p>
+      <a href="/" class="start-btn">Find Products</a>
+    </div>
+  </div>
+
+  <footer class="main-footer">
+    <p class="copyright">&copy; 2026 AI Product Recommender. Built for Final Year Project.</p>
+  </footer>
+
+  <script>
+    function formatPrice(p) {
+      const n = parseFloat(p);
+      return isNaN(n) ? p : '₹' + n.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+    }
+
+    function renderSaved() {
+      const saved = JSON.parse(localStorage.getItem('savedProducts') || '{}');
+      const keys = Object.keys(saved);
+      const grid = document.getElementById('savedGrid');
+      const empty = document.getElementById('emptyState');
+      const count = document.getElementById('savedCount');
+
+      count.textContent = keys.length;
+
+      if (keys.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+
+      grid.innerHTML = keys.map(id => {
+        const p = saved[id];
+        const imgTag = p.image
+          ? `<img src="${p.image}" alt="${p.name}" onerror="this.style.display='none'; this.nextSibling.style.display='block';">
+             <i class="fas fa-image no-img" style="display:none;"></i>`
+          : `<i class="fas fa-image no-img"></i>`;
+
+        return `
+          <div class="saved-card" id="card-${id}">
+            <div class="saved-img-wrap">${imgTag}</div>
+            <div class="saved-body">
+              <div class="saved-name">${p.name}</div>
+              <div class="saved-platform"><i class="fas fa-store" style="margin-right:4px; opacity:0.6;"></i>${p.platform}</div>
+              <div class="saved-price">${formatPrice(p.price)}</div>
+              ${p.score ? `<div class="saved-score"><i class="fas fa-robot" style="margin-right:4px;"></i>AI Score: <strong>${p.score}</strong></div>` : ''}
+              <div class="card-actions">
+                <a href="${p.url}" target="_blank" rel="noopener noreferrer" class="view-btn">
+                  <i class="fas fa-external-link-alt" style="margin-right:5px;"></i>View Deal
+                </a>
+                <button class="remove-btn" onclick="removeSaved('${id}')">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function removeSaved(id) {
+      const saved = JSON.parse(localStorage.getItem('savedProducts') || '{}');
+      delete saved[id];
+      localStorage.setItem('savedProducts', JSON.stringify(saved));
+      renderSaved();
+    }
+
+    document.addEventListener('DOMContentLoaded', renderSaved);
+  </script>
+</body>
+</html>

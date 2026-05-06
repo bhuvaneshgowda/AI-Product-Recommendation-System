@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Search History | AI Product Recommender</title>
+  <meta name="description" content="View your past product comparison searches.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body { font-family: 'Poppins', sans-serif; background: #0f1729; color: #fff; min-height: 100vh; }
+    .page-wrapper { max-width: 1100px; margin: 0 auto; padding: 2rem; }
+    .page-title { font-size: 2rem; font-weight: 700; margin-bottom: 0.4rem; }
+    .page-subtitle { opacity: 0.6; font-size: 1rem; margin-bottom: 2.5rem; }
+
+    .history-grid { display: flex; flex-direction: column; gap: 1rem; }
+    .history-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 1.4rem 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex-wrap: wrap;
+    }
+    .history-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.35); background: rgba(108,99,255,0.08); }
+    .history-query { font-size: 1.1rem; font-weight: 700; color: #c4b5fd; }
+    .history-meta { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .meta-item { display: flex; flex-direction: column; align-items: flex-start; }
+    .meta-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; opacity: 0.5; }
+    .meta-value { font-size: 0.95rem; font-weight: 600; }
+    .view-btn {
+      padding: 0.55rem 1.3rem; border-radius: 10px; font-size: 0.85rem; font-weight: 600;
+      background: linear-gradient(135deg, #6C63FF, #FF6FD8); color: #fff;
+      border: none; cursor: pointer; text-decoration: none; display: inline-block;
+      transition: transform 0.2s, box-shadow 0.2s; white-space: nowrap;
+    }
+    .view-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,99,255,0.4); }
+    .empty-state { text-align: center; padding: 6rem 2rem; opacity: 0.5; }
+    .empty-state i { font-size: 3.5rem; margin-bottom: 1.5rem; display: block; }
+    .empty-state p { font-size: 1.1rem; }
+    .date-tag { font-size: 0.75rem; opacity: 0.5; }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <div class="nav-logo">
+      <i class="fas fa-shopping-bag text-purple"></i> AI Product <span class="text-blue">Recommender</span>
+    </div>
+    <div class="nav-links">
+      <a href="/" class="nav-link"><i class="fas fa-home"></i> Home</a>
+      <a href="/dashboard" class="nav-link"><i class="fas fa-th-large"></i> Dashboard</a>
+      <a href="/history" class="nav-link active"><i class="fas fa-history"></i> History</a>
+      <a href="/saved" class="nav-link"><i class="far fa-heart"></i> Saved</a>
+    </div>
+    <div class="nav-actions">
+      <a href="/" class="gradient-btn ripple-btn"><i class="fas fa-search"></i> New Search</a>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <h1 class="page-title"><i class="fas fa-history" style="color:#60a5fa; margin-right:0.5rem;"></i>Search History</h1>
+    <p class="page-subtitle">Your past product comparison searches — click to run again.</p>
+
+    {% if searches %}
+    <div class="history-grid">
+      {% for s in searches %}
+      <div class="history-card">
+        <div>
+          <div class="history-query"><i class="fas fa-search" style="font-size:0.85em; margin-right:6px; opacity:0.6;"></i>{{ s.query }}</div>
+          <div class="date-tag">{{ s.date }}</div>
+        </div>
+        <div class="history-meta">
+          <div class="meta-item">
+            <span class="meta-label">Products</span>
+            <span class="meta-value">{{ s.product_count }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Best Price</span>
+            <span class="meta-value">{% if s.best_price %}₹{{ "{:,.0f}".format(s.best_price) }}{% else %}—{% endif %}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Top Platform</span>
+            <span class="meta-value">{{ s.best_platform or '—' }}</span>
+          </div>
+        </div>
+        <form action="/search" method="POST">
+          <input type="hidden" name="query" value="{{ s.query }}">
+          <button type="submit" class="view-btn"><i class="fas fa-redo" style="margin-right:6px;"></i>View Again</button>
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fas fa-history"></i>
+      <p>No search history yet.</p>
+      <a href="/" class="view-btn" style="margin-top:1.5rem; display:inline-block;">Start Searching</a>
+    </div>
+    {% endif %}
+  </div>
+
+  <footer class="main-footer">
+    <p class="copyright">&copy; 2026 AI Product Recommender. Built for Final Year Project.</p>
+  </footer>
+</body>
+</html>
