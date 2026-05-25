@@ -53,7 +53,7 @@ def saved():
     return render_template('saved.html')
 
 
-@app.route('/search', methods=['POST'])
+@app.route('/search', methods=['GET', 'POST'])
 def search():
     """
     Handle search form submission.
@@ -63,8 +63,14 @@ def search():
     4. Save to database
     5. Display results
     """
-    query = request.form.get('query', '').strip()
-    category = request.form.get('category', 'All')
+    # Support both form POSTs and direct GET requests with query params
+    if request.method == 'POST':
+        query = request.form.get('query', '').strip()
+        category = request.form.get('category', 'All')
+    else:
+        # GET: accept ?query=... and optional ?category=...
+        query = request.args.get('query', request.args.get('q', '')).strip()
+        category = request.args.get('category', 'All')
     full_query = f"{query} {category}" if category != 'All' else query
     
     if not query:
@@ -156,4 +162,6 @@ def search():
 
 # Run the app
 if __name__ == '__main__':
-    app.run(debug=True, port=5008)
+    port = int(os.environ.get('PORT', 5008))
+    debug_flag = os.environ.get('FLASK_DEBUG', 'false').lower() in ('1', 'true', 'yes')
+    app.run(host='0.0.0.0', port=port, debug=debug_flag)

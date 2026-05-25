@@ -6,6 +6,7 @@ import os
 import re
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from serpapi import GoogleSearch
 
@@ -120,6 +121,53 @@ def safe_rating(rating_val) -> float | None:
         return None
 
 
+def extract_direct_product_url(item: dict) -> str:
+    """Try direct URL properties before doing an expensive immersive lookup."""
+    for field in (
+        'link',
+        'store_link',
+        'shopping_url',
+        'unified_product_link',
+        'product_url'
+    ):
+        url = item.get(field)
+        if isinstance(url, str) and url.strip():
+            is_valid, _ = is_valid_product_url(url)
+            if is_valid:
+                return url.strip()
+    return ''
+
+
+def resolve_product_url(item: dict, api_key: str) -> str:
+    """Resolve a product URL, using immersive data only when needed."""
+    product_url = extract_direct_product_url(item)
+    if product_url:
+        return product_url
+
+    page_token = item.get("immersive_product_page_token")
+    if not page_token:
+        return ''
+
+    immersive_params = {
+        "engine": "google_immersive_product",
+        "page_token": page_token,
+        "api_key": api_key
+    }
+    immersive_search = GoogleSearch(immersive_params)
+    immersive_data = get_immersive_data_with_timeout(immersive_search, timeout=5)
+    if immersive_data and "product_results" in immersive_data:
+        product_info = immersive_data["product_results"]
+        if isinstance(product_info, dict) and "stores" in product_info:
+            stores = product_info["stores"]
+            for store in stores:
+                store_link = store.get("link", "")
+                if store_link:
+                    is_valid, _ = is_valid_product_url(store_link)
+                    if is_valid:
+                        return store_link
+    return ''
+
+
 # ─────────────────────────────────────────────────────────────
 # Main Scraper
 # ─────────────────────────────────────────────────────────────
@@ -139,10 +187,30 @@ def scrape_products(query: str) -> list[dict]:
 
     api_key = os.environ.get("SERPAPI_KEY", "").strip()
     print(f"[Debug] API Key found: {bool(api_key)} (Length: {len(api_key)})")
-    
+
+    # Development helper: allow a mock mode to avoid needing SerpAPI credits
+    mock_mode = os.environ.get('MOCK_RESULTS', '').lower() in ('1', 'true', 'yes')
+    if mock_mode:
+        print('[Scraper] MOCK mode enabled — returning sample products')
+        return [
+            {
+                'name': 'Mock Phone Model X',
+                'price': 19999.0,
+                'rating': 4.2,
+                'platform': 'Amazon',
+                'image': '',
+                'product_url': 'https://www.amazon.in/dp/mock',
+                'review_text': 'Great value for money',
+                'discount_percent': 10.0,
+                'search_query': query
+            }
+        ]
+
     if not api_key or api_key == "your_api_key_here":
-        print("[Scraper] ERROR: SERPAPI_KEY is missing or invalid in .env")
-        return []
+        msg = "SERPAPI_KEY is missing or invalid in .env"
+        print(f"[Scraper] ERROR: {msg}")
+        # Surface the error to the caller so the UI can display it
+        raise Exception(msg)
 
     params = {
         "engine":  "google_shopping",
@@ -150,17 +218,18 @@ def scrape_products(query: str) -> list[dict]:
         "hl":      "en",
         "gl":      "in",
         "api_key": api_key,
-        "num":     40,
+        "num":     20,
     }
 
     print("[Scraper] Calling SerpAPI Google Shopping...")
     valid_products = []
     rejected = 0
+    start_time = time.perf_counter()
 
     try:
         search  = GoogleSearch(params)
         data    = search.get_dict()
-        
+
         print(f"[Debug] Response Keys: {list(data.keys())}")
         if "search_metadata" in data:
             print(f"[Debug] Search Status: {data['search_metadata'].get('status')}")
@@ -168,8 +237,9 @@ def scrape_products(query: str) -> list[dict]:
         if "error" in data:
             error_msg = data['error']
             print(f"[Scraper] API Error: {error_msg}")
+            # Bubble up API errors so caller can react (and UI can show details)
             raise Exception(f"SerpAPI Error: {error_msg}")
-        
+
         if "search_metadata" in data:
             status = data['search_metadata'].get('status')
             if status and status != "Success":
@@ -177,10 +247,14 @@ def scrape_products(query: str) -> list[dict]:
                 print(f"[Scraper] {error_msg}")
                 raise Exception(error_msg)
 
-        shopping_results = data.get("shopping_results", [])
-        print(f"[Scraper] Raw shopping_results count: {len(shopping_results)}")
+        shopping_results = data.get("shopping_results", [])[:20]
+        print(f"[Scraper] Raw shopping_results count: {len(shopping_results)} (trimmed to 20)")
 
-        for item in shopping_results:
+        # Resolve all product URLs concurrently to reduce total wait time
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            resolved_urls = list(executor.map(lambda item: resolve_product_url(item, api_key), shopping_results))
+
+        for item, product_url in zip(shopping_results, resolved_urls):
             name = (item.get("title") or "").strip()
             price = item.get("extracted_price")
             if not price:
@@ -189,31 +263,32 @@ def scrape_products(query: str) -> list[dict]:
                 price = clean_price(price)
 
             # === GET REAL ECOMMERCE URL ===
-            product_url = ""
-            page_token = item.get("immersive_product_page_token")
-            if page_token:
-                try:
-                    immersive_params = {
-                        "engine": "google_immersive_product",
-                        "page_token": page_token,
-                        "api_key": api_key
-                    }
-                    immersive_search = GoogleSearch(immersive_params)
-                    immersive_data = get_immersive_data_with_timeout(immersive_search, timeout=8)
-                    if "product_results" in immersive_data:
-                        product_info = immersive_data["product_results"]
-                        if "stores" in product_info:
-                            stores = product_info["stores"]
-                            # Find FIRST store from TRUSTED domain
-                            for store in stores:
-                                store_link = store.get("link", "")
-                                if store_link:
-                                    is_valid, _ = is_valid_product_url(store_link)
-                                    if is_valid:
-                                        product_url = store_link
-                                        break
-                except Exception:
-                    pass
+            product_url = extract_direct_product_url(item)
+            if not product_url:
+                page_token = item.get("immersive_product_page_token")
+                if page_token:
+                    try:
+                        immersive_params = {
+                            "engine": "google_immersive_product",
+                            "page_token": page_token,
+                            "api_key": api_key
+                        }
+                        immersive_search = GoogleSearch(immersive_params)
+                        immersive_data = get_immersive_data_with_timeout(immersive_search, timeout=6)
+                        if immersive_data and "product_results" in immersive_data:
+                            product_info = immersive_data["product_results"]
+                            if "stores" in product_info:
+                                stores = product_info["stores"]
+                                # Find FIRST store from TRUSTED domain
+                                for store in stores:
+                                    store_link = store.get("link", "")
+                                    if store_link:
+                                        is_valid, _ = is_valid_product_url(store_link)
+                                        if is_valid:
+                                            product_url = store_link
+                                            break
+                    except Exception:
+                        pass
 
             # === VALIDATE URL ===
             is_url_valid, url_reason = is_valid_product_url(product_url)
@@ -256,11 +331,12 @@ def scrape_products(query: str) -> list[dict]:
 
             if len(valid_products) >= 20:
                 break
-            if len(valid_products) >= 20:
-                break
 
     except Exception as e:
+        # Log and re-raise so the web app can surface the root cause
         print(f"[Scraper] Request failed: {e}")
+        raise
 
-    print(f"[Scraper] Valid: {len(valid_products)} | Rejected: {rejected}\n")
+    elapsed = time.perf_counter() - start_time
+    print(f"[Scraper] Valid: {len(valid_products)} | Rejected: {rejected} | Time: {elapsed:.2f}s\n")
     return valid_products

@@ -54,5 +54,35 @@ graph TD
 - **Resilient Fallbacks**: If a scraper fails or an image is missing, the system uses category-based fallback imagery and median-price estimation.
 - **Accessibility**: ARIA-compliant UI with full keyboard support and screen reader optimization.
 
+## 🚀 Deployment
+
+### 1) GitHub
+1. Initialize the repo if you haven’t already:
+   ```bash
+   git init
+   git branch -M main
+   git remote add origin https://github.com/<your-username>/<repo-name>.git
+   git add .
+   git commit -m "Initial deploy-ready commit"
+   git push -u origin main
+   ```
+2. Replace `<your-username>` and `<repo-name>` with your GitHub account and repository name.
+
+### 2) Render
+1. Create an account at https://render.com and connect your GitHub repository.
+2. Create a new **Web Service**.
+3. Configure:
+   - **Environment**: Python
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `gunicorn app:app --bind 0.0.0.0:$PORT`
+4. Add environment variables:
+   - `SERPAPI_KEY` = your API key
+   - `FLASK_DEBUG=false`
+5. Deploy and open your service.
+
+### 3) Vercel
+- This project is not a native Vercel deployment because it is a Flask backend with server-rendered templates and SQLite.
+- For Vercel, you would typically need to separate the frontend and host backend on Render or another Python host.
+
 ---
 Built with ❤️ for the Final Year Project Showcase.
