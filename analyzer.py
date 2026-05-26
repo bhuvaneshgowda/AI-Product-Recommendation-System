@@ -5,20 +5,33 @@ import os
 from textblob import TextBlob
 import nltk
 
-# Point NLTK to local data directory (populated at build time by nltk_setup.py)
-_nltk_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nltk_data')
-if os.path.isdir(_nltk_data_dir):
+if os.environ.get('VERCEL'):
+    _nltk_data_dir = '/tmp/nltk_data'
+    os.makedirs(_nltk_data_dir, exist_ok=True)
     nltk.data.path.insert(0, _nltk_data_dir)
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', download_dir=_nltk_data_dir, quiet=True)
+    try:
+        nltk.data.find('tokenizers/punkt_tab')
+    except LookupError:
+        nltk.download('punkt_tab', download_dir=_nltk_data_dir, quiet=True)
+else:
+    # Point NLTK to local data directory (populated at build time by nltk_setup.py)
+    _nltk_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nltk_data')
+    if os.path.isdir(_nltk_data_dir):
+        nltk.data.path.insert(0, _nltk_data_dir)
 
-# Download required NLTK data (fallback for local development)
-try:
-    nltk.data.find('tokenizers/punkt')
-except LookupError:
-    nltk.download('punkt', quiet=True)
-try:
-    nltk.data.find('tokenizers/punkt_tab')
-except LookupError:
-    nltk.download('punkt_tab', quiet=True)
+    # Download required NLTK data (fallback for local development)
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', quiet=True)
+    try:
+        nltk.data.find('tokenizers/punkt_tab')
+    except LookupError:
+        nltk.download('punkt_tab', quiet=True)
 
 def analyze_sentiment(review_text):
     """
