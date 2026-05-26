@@ -4,8 +4,12 @@
 import sqlite3
 import os
 
-# Path to database file
-DB_PATH = os.path.join('data', 'products.db')
+# Path to database file — cloud-aware
+# Vercel has a read-only filesystem; only /tmp is writable
+if os.environ.get('VERCEL'):
+    DB_PATH = '/tmp/data/products.db'
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'products.db')
 
 
 def get_connection():
@@ -20,7 +24,7 @@ def init_db():
     Create the database and products table if they don't exist.
     Also runs a safe migration to add the 'image' column if missing.
     """
-    os.makedirs('data', exist_ok=True)
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
     conn = get_connection()
     cursor = conn.cursor()

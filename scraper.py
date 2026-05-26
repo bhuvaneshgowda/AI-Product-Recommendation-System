@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dotenv import load_dotenv
 from serpapi import GoogleSearch
 
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 load_dotenv(dotenv_path)
 
 def get_immersive_data_with_timeout(search_obj, timeout=10):

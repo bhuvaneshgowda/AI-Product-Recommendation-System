@@ -6,17 +6,20 @@ from scraper import scrape_products
 from analyzer import process_products
 from database import init_db, save_products, get_products_by_query, clear_old_results, get_global_stats
 
+import os
+from dotenv import load_dotenv
+
+# Load .env from the same directory as this script (works from any cwd)
+dotenv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+load_dotenv(dotenv_path)
+
 # Create the Flask app
 app = Flask(__name__)
+app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-fallback-key-change-in-prod')
 
 # Initialize database when app starts
 init_db()
 
-import os
-from dotenv import load_dotenv
-
-dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
-load_dotenv(dotenv_path)
 key = os.getenv("SERPAPI_KEY")
 print(f"--- SYSTEM STARTUP ---")
 print(f"API KEY DETECTED: {bool(key)}")

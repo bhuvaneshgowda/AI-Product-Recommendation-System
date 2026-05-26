@@ -1,14 +1,24 @@
 # analyzer.py
 # AI module: Sentiment Analysis + Product Scoring
 
+import os
 from textblob import TextBlob
 import nltk
 
-# Download required NLTK data (only needed once)
+# Point NLTK to local data directory (populated at build time by nltk_setup.py)
+_nltk_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'nltk_data')
+if os.path.isdir(_nltk_data_dir):
+    nltk.data.path.insert(0, _nltk_data_dir)
+
+# Download required NLTK data (fallback for local development)
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
     nltk.download('punkt', quiet=True)
+try:
+    nltk.data.find('tokenizers/punkt_tab')
+except LookupError:
+    nltk.download('punkt_tab', quiet=True)
 
 def analyze_sentiment(review_text):
     """

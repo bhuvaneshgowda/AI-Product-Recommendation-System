@@ -23,3 +23,9 @@ env/
 # OS generated
 .DS_Store
 Thumbs.db
+
+# NLTK data (downloaded at build time)
+nltk_data/
+
+# Vercel
+.vercel/
