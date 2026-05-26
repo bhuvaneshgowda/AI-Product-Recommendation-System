@@ -10,6 +10,6 @@ services:
       - key: FLASK_DEBUG
         value: "false"
       - key: SERPAPI_KEY
-        fromSecret: SERPAPI_KEY
+        value: "8e79624703b31a89c48d3fe0d5f219d7af6919e18299190c327d8bba9957a3e9"
       - key: PYTHON_VERSION
         value: "3.11.0"

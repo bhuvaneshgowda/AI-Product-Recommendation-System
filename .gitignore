@@ -29,3 +29,4 @@ nltk_data/
 
 # Vercel
 .vercel/
+.vercel
